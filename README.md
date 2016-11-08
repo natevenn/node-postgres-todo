@@ -1,6 +1,6 @@
 #### node-postgres-todo
 
-This is a simple single page node app using postgreSQL as a database Angular on the f
+This is a simple single page node app using postgreSQL, Express, and Angular
 
 ## setup
 
