@@ -11,96 +11,69 @@ router.get('/', function(req, res, next) {
 
 /* GET items */
 router.get('/api/v1/todos', (req, res, next) => {
-  const results = [];
   pg.connect(connectionString, (err, client, done) => {
-    if(err) {
-      done();
-      console.log(err);
-      return res.status(500).json({success: false, data: err});
-    }
-    const query = client.query("SELECT * FROM items ORDER BY id ASC;");
-    query.on('row', (row) => {
-      results.push(row);
-    });
-    query.on('end', () => {
-      done();
-      return res.json(results);
-    });
+    if(err) { handleError(err); }
+
+    getResults(client, res, done);
   });
 });
 
 /* create item */
 router.post('/api/v1/todos', (req, res, next) => {
-  const results = [];
   const data = {text: req.body.text, complete: req.body.complete};
   pg.connect(connectionString, (err, client, done) => {
-    if(err) {
-      done();
-      console.log(err);
-      return res.status(500).json({success: false, data: err});
-    }
-    client.query('INSERT INTO items(text, complete) values($1, $2)',
-    [data.text, data.complete]);
+    if(err) { handleError(err); }
 
-    const query = client.query('SELECT * FROM items ORDER BY id ASC');
-    query.on('row', (row) => {
-      results.push(row);
-  });
+    client.query('INSERT INTO items(text, complete) values($1, $2)', [data.text, data.complete]);
 
-  query.on('end', () => {
-    done();
-    return res.json(results)
-  });
+    getResults(client, res, done);
   });
 });
 
 /* update item */
 router.put('/api/v1/todos/:todo_id', (req, res, next) => {
-  const results = [];
   const id = req.params.todo_id
   const data = {text: req.body.text, complete: req.body.complete}
 
   pg.connect(connectionString, (err, client, done) => {
-    if(err) {
-      done();
-      console.log(err);
-      return res.status(500).json({success: false, data: err});
-    };
+    if(err) { handleError(err); };
 
-    client.query('UPDATE items SET text=($1), complete=($2) WHERE id=($3)',
-    [data.text, data.complete, id]);
+    client.query('UPDATE items SET text=($1), complete=($2) WHERE id=($3);', [data.text, data.complete, id]);
 
-    const query = client.query('SELECT * FROM items ORDER BY id ASC;');
-    query.on('row', (row) => {
-      results.push(row)
-    });
-
-   query.on('end', () => {
-     done();
-     return res.json(results);
-   });
+    getResults(client, res, done);
   });
 });
 
 /* delete item */
 router.delete('/api/v1/todos/:todo_id', (req, res, next) => {
-  const results = [];
   const id = req.params.todo_id
   pg.connect(connectionString, (err, client, done) => {
-  if(err) {
-    done();
-    console.log(err);
-    return res.status(500).json({success: false, data: err});
-  }
-  client.query('DELETE FROM items WHERE id=($1)', [id]);
-  var query = client.query('SELECT * FROm items ORDER BY id ASC;')
+    if(err) { handleError(err); }
+
+    client.query('DELETE FROM items WHERE id=($1)', [id]);
+
+    getResults(client, res, done);
+  })
+});
+
+function handleError(err) {
+  done();
+  console.log(err);
+  return res.status(500).json({success: false, data: err});
+}
+
+function getResults(client, res, done) {
+  const results = [];
+  const query = client.query('SELECT * FROM items ORDER BY id ASC');
+
   query.on('row', (row) => {
     results.push(row)
   })
+
   query.on('end', () => {
     done();
     return res.json(results);
   })
-  })
-});
+
+}
 module.exports = router;
