@@ -9,6 +9,7 @@ router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
+/* GET items */
 router.get('/api/v1/todos', (req, res, next) => {
   const results = [];
   pg.connect(connectionString, (err, client, done) => {
@@ -28,6 +29,7 @@ router.get('/api/v1/todos', (req, res, next) => {
   });
 });
 
+/* create item */
 router.post('/api/v1/todos', (req, res, next) => {
   const results = [];
   const data = {text: req.body.text, complete: req.body.complete};
@@ -52,6 +54,7 @@ router.post('/api/v1/todos', (req, res, next) => {
   });
 });
 
+/* update item */
 router.put('/api/v1/todos/:todo_id', (req, res, next) => {
   const results = [];
   const id = req.params.todo_id
@@ -79,4 +82,25 @@ router.put('/api/v1/todos/:todo_id', (req, res, next) => {
   });
 });
 
+/* delete item */
+router.delete('/api/v1/todos/:todo_id', (req, res, next) => {
+  const results = [];
+  const id = req.params.todo_id
+  pg.connect(connectionString, (err, client, done) => {
+  if(err) {
+    done();
+    console.log(err);
+    return res.status(500).json({success: false, data: err});
+  }
+  client.query('DELETE FROM items WHERE id=($1)', [id]);
+  var query = client.query('SELECT * FROm items ORDER BY id ASC;')
+  query.on('row', (row) => {
+    results.push(row)
+  })
+  query.on('end', () => {
+    done();
+    return res.json(results);
+  })
+  })
+});
 module.exports = router;
